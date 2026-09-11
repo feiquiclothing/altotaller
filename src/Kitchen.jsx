@@ -1,11 +1,11 @@
 import React, { useEffect, useRef, useState } from "react";
 
-const ENDPOINT = "/api/secto";
+const ENDPOINT = "/api/alto";
 const POLL_MS = 2500;
 
-const LEADER_KEY = "secto_kitchen_leader_v2";
+const LEADER_KEY = "alto_kitchen_leader_v2";
 const LEADER_TTL = 8000;
-const STARTED_KEY = "secto_kitchen_started_v1";
+const STARTED_KEY = "alto_kitchen_started_v1";
 
 function makeTabId() {
   return `kitchen_${Date.now()}_${Math.random().toString(36).slice(2)}`;
