@@ -23,16 +23,27 @@ export default function Ticket() {
   const id = params.get("id");
 
   const [order, setOrder] = useState(null);
-  const [status, setStatus] = useState(id ? "Cargando pedido…" : "Sin pedido.");
+  const [status, setStatus] = useState(
+    id ? "Cargando pedido…" : "Sin pedido."
+  );
+
   const printStartedRef = useRef(false);
   const printDialogOpenedRef = useRef(false);
   const printRetryTimerRef = useRef(null);
   const printAttemptsRef = useRef(0);
   const finishedRef = useRef(false);
 
+  // ======================================================
+  // TÍTULO
+  // ======================================================
+
   useEffect(() => {
     document.title = id ? `COMANDA ${id}` : "COMANDA";
   }, [id]);
+
+  // ======================================================
+  // CARGAR PEDIDO
+  // ======================================================
 
   useEffect(() => {
     if (!id) return;
@@ -56,7 +67,9 @@ export default function Ticket() {
         const data = await res.json();
 
         if (!res.ok || data?.ok === false || !data?.order) {
-          throw new Error(data?.error || "No se encontró el pedido");
+          throw new Error(
+            data?.error || "No se encontró el pedido"
+          );
         }
 
         if (!stop) {
@@ -65,7 +78,10 @@ export default function Ticket() {
         }
       } catch (err) {
         if (!stop) {
-          setStatus("Error cargando pedido: " + (err?.message || err));
+          setStatus(
+            "Error cargando pedido: " +
+              (err?.message || err)
+          );
         }
       }
     };
@@ -77,10 +93,15 @@ export default function Ticket() {
     };
   }, [id]);
 
+  // ======================================================
+  // IMPRIMIR
+  // ======================================================
+
   const triggerPrint = () => {
     if (!order || printDialogOpenedRef.current) return;
 
     printAttemptsRef.current += 1;
+
     setStatus(
       `Abriendo ventana de impresión… intento ${printAttemptsRef.current}`
     );
@@ -101,12 +122,19 @@ export default function Ticket() {
           try {
             window.print();
           } catch (err) {
-            console.warn("window.print() falló:", err);
+            console.warn(
+              "window.print() falló:",
+              err
+            );
           }
         }, 180);
       });
     });
   };
+
+  // ======================================================
+  // EVENTOS DE IMPRESIÓN
+  // ======================================================
 
   useEffect(() => {
     const onBeforePrint = () => {
@@ -121,6 +149,7 @@ export default function Ticket() {
 
     const onAfterPrint = async () => {
       if (finishedRef.current) return;
+
       finishedRef.current = true;
 
       setStatus("Cerrando comanda…");
@@ -141,7 +170,10 @@ export default function Ticket() {
         const data = await res.json();
 
         if (!res.ok || data?.ok === false) {
-          throw new Error(data?.error || "No se pudo marcar como impreso");
+          throw new Error(
+            data?.error ||
+              "No se pudo marcar como impreso"
+          );
         }
 
         if (returnTo) {
@@ -151,6 +183,7 @@ export default function Ticket() {
         }
       } catch (err) {
         finishedRef.current = false;
+
         setStatus(
           "Se imprimió, pero no pude cerrar el pedido: " +
             (err?.message || String(err))
@@ -158,17 +191,41 @@ export default function Ticket() {
       }
     };
 
-    window.addEventListener("beforeprint", onBeforePrint);
-    window.addEventListener("afterprint", onAfterPrint);
+    window.addEventListener(
+      "beforeprint",
+      onBeforePrint
+    );
+
+    window.addEventListener(
+      "afterprint",
+      onAfterPrint
+    );
 
     return () => {
-      window.removeEventListener("beforeprint", onBeforePrint);
-      window.removeEventListener("afterprint", onAfterPrint);
+      window.removeEventListener(
+        "beforeprint",
+        onBeforePrint
+      );
+
+      window.removeEventListener(
+        "afterprint",
+        onAfterPrint
+      );
     };
   }, [order, id, returnTo]);
 
+  // ======================================================
+  // IMPRESIÓN AUTOMÁTICA
+  // ======================================================
+
   useEffect(() => {
-    if (!order || !autoPrint || printStartedRef.current) return;
+    if (
+      !order ||
+      !autoPrint ||
+      printStartedRef.current
+    ) {
+      return;
+    }
 
     printStartedRef.current = true;
     printAttemptsRef.current = 0;
@@ -177,70 +234,126 @@ export default function Ticket() {
     const first = setTimeout(() => {
       triggerPrint();
 
-      // Chrome a veces ignora el primer print() si el popup todavía
-      // no quedó activo. Reintentamos hasta que beforeprint confirme
-      // que el diálogo realmente se abrió.
-      printRetryTimerRef.current = setInterval(() => {
-        if (printDialogOpenedRef.current) {
-          clearInterval(printRetryTimerRef.current);
-          printRetryTimerRef.current = null;
-          return;
-        }
+      // Chrome a veces ignora el primer print()
+      // si la pestaña todavía no quedó activa.
+      printRetryTimerRef.current = setInterval(
+        () => {
+          if (printDialogOpenedRef.current) {
+            clearInterval(
+              printRetryTimerRef.current
+            );
 
-        if (printAttemptsRef.current >= 8) {
-          clearInterval(printRetryTimerRef.current);
-          printRetryTimerRef.current = null;
-          setStatus(
-            "Chrome bloqueó la impresión automática. Usá IMPRIMIR COMANDA."
-          );
-          return;
-        }
+            printRetryTimerRef.current = null;
 
-        triggerPrint();
-      }, 900);
+            return;
+          }
+
+          if (
+            printAttemptsRef.current >= 8
+          ) {
+            clearInterval(
+              printRetryTimerRef.current
+            );
+
+            printRetryTimerRef.current = null;
+
+            setStatus(
+              "Chrome bloqueó la impresión automática. Usá IMPRIMIR COMANDA."
+            );
+
+            return;
+          }
+
+          triggerPrint();
+        },
+        900
+      );
     }, popupMode ? 450 : 700);
 
     return () => {
       clearTimeout(first);
 
       if (printRetryTimerRef.current) {
-        clearInterval(printRetryTimerRef.current);
+        clearInterval(
+          printRetryTimerRef.current
+        );
+
         printRetryTimerRef.current = null;
       }
     };
   }, [order, autoPrint, popupMode]);
+
+  // ======================================================
+  // REINTENTO CUANDO LA PESTAÑA RECUPERA FOCO
+  // ======================================================
 
   useEffect(() => {
     if (!order || !autoPrint) return;
 
     const retryOnActive = () => {
       if (!printDialogOpenedRef.current) {
-        setTimeout(() => triggerPrint(), 120);
+        setTimeout(
+          () => triggerPrint(),
+          120
+        );
       }
     };
 
     const onVisibility = () => {
-      if (document.visibilityState === "visible") retryOnActive();
+      if (
+        document.visibilityState === "visible"
+      ) {
+        retryOnActive();
+      }
     };
 
-    window.addEventListener("focus", retryOnActive);
-    document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener(
+      "focus",
+      retryOnActive
+    );
+
+    document.addEventListener(
+      "visibilitychange",
+      onVisibility
+    );
 
     return () => {
-      window.removeEventListener("focus", retryOnActive);
-      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener(
+        "focus",
+        retryOnActive
+      );
+
+      document.removeEventListener(
+        "visibilitychange",
+        onVisibility
+      );
     };
   }, [order, autoPrint]);
 
+  // ======================================================
+  // CARGANDO
+  // ======================================================
+
   if (!order) {
     return (
-      <div style={{ padding: 16, fontFamily: "monospace" }}>
+      <div
+        style={{
+          padding: 16,
+          fontFamily: "monospace",
+        }}
+      >
         {status || "Sin pedido."}
       </div>
     );
   }
 
-  const isWhatsApp = order?.source === "whatsapp" || !!order?.rawText;
+  // ======================================================
+  // DATOS DEL PEDIDO
+  // ======================================================
+
+  const isWhatsApp =
+    order?.source === "whatsapp" ||
+    !!order?.rawText;
 
   const {
     items = [],
@@ -259,7 +372,8 @@ export default function Ticket() {
     comboSelections = [],
   } = order;
 
-  const displayName = name || customer || "-";
+  const displayName =
+    name || customer || "-";
 
   const displayMethod =
     method === "pickup"
@@ -270,79 +384,157 @@ export default function Ticket() {
       ? "WHATSAPP"
       : "—";
 
-  const hasItems = Array.isArray(items) && items.length > 0;
+  const hasItems =
+    Array.isArray(items) &&
+    items.length > 0;
+
   const hasComboSelections =
-    Array.isArray(comboSelections) && comboSelections.length > 0;
+    Array.isArray(comboSelections) &&
+    comboSelections.length > 0;
+
+  // ======================================================
+  // RENDER
+  // ======================================================
 
   return (
     <>
+      {/* CONTROLES NO IMPRIMIBLES */}
       <div className="noprint controls">
         <div style={{ fontWeight: 800 }}>
           {status || "Comanda lista"}
         </div>
 
-        <button type="button" onClick={triggerPrint}>
+        <button
+          type="button"
+          onClick={triggerPrint}
+        >
           IMPRIMIR COMANDA
         </button>
       </div>
 
+      {/* COMANDA */}
       <div className="t">
         <div className="c">
-          <div className="b">ALTO TALLER</div>
-          <div className="m">Piedras 292</div>
+          <div className="b">
+            ALTO TALLER
+          </div>
+
+          <div className="m">
+            Piedras 292
+          </div>
         </div>
 
         <div className="hr" />
 
-        <div>Pedido: {order.id || id || "-"}</div>
-        <div>Metodo: {displayMethod}</div>
-        <div>Horario: {time || "ASAP"}</div>
-        <div>Nombre: {displayName}</div>
-        <div>Tel: {phone || "-"}</div>
+        <div>
+          Pedido: {order.id || id || "-"}
+        </div>
 
-        {method === "delivery" ? <div>Dir: {address || "-"}</div> : null}
-        {notes ? <div>Notas: {notes}</div> : null}
+        <div>
+          Metodo: {displayMethod}
+        </div>
 
+        <div>
+          Horario: {time || "ASAP"}
+        </div>
+
+        <div>
+          Nombre: {displayName}
+        </div>
+
+        <div>
+          Tel: {phone || "-"}
+        </div>
+
+        {method === "delivery" ? (
+          <div>
+            Dir: {address || "-"}
+          </div>
+        ) : null}
+
+        {notes ? (
+          <div>
+            Notas: {notes}
+          </div>
+        ) : null}
+
+        {/* WHATSAPP */}
         {isWhatsApp && rawText ? (
           <>
             <div className="hr" />
-            <div className="b" style={{ letterSpacing: "0.06em" }}>
+
+            <div
+              className="b"
+              style={{
+                letterSpacing: "0.06em",
+              }}
+            >
               PEDIDO (WHATSAPP)
             </div>
-            <div className="raw">{rawText}</div>
+
+            <div className="raw">
+              {rawText}
+            </div>
           </>
         ) : null}
 
+        {/* ITEMS */}
         {hasItems ? (
           <>
             <div className="hr" />
 
-            {items.map(({ item, qty }, i) => (
-              <div key={i} className="row">
-                <div className="l">
-                  {qty}x {item?.name}
+            {items.map(
+              ({ item, qty }, i) => (
+                <div
+                  key={i}
+                  className="row"
+                >
+                  <div className="l">
+                    {qty}x {item?.name}
+                  </div>
+
+                  <div className="r">
+                    {currency(
+                      (item?.price || 0) *
+                        (qty || 0)
+                    )}
+                  </div>
                 </div>
-                <div className="r">
-                  {currency((item?.price || 0) * (qty || 0))}
-                </div>
-              </div>
-            ))}
+              )
+            )}
 
             <div className="hr" />
 
             <div className="row">
-              <div className="l">Subtotal</div>
-              <div className="r">{currency(subtotal)}</div>
+              <div className="l">
+                Subtotal
+              </div>
+
+              <div className="r">
+                {currency(subtotal)}
+              </div>
             </div>
 
-            <div className="row">
-              <div className="l">Envio</div>
-              <div className="r">{currency(fee)}</div>
-            </div>
+            {fee > 0 ? (
+              <div className="row">
+                <div className="l">
+                  Envío
+                </div>
+
+                <div className="r">
+                  {currency(fee)}
+                </div>
+              </div>
+            ) : null}
 
             <div className="row b">
-              <div className="l">TOTAL</div>
-              <div className="r">{currency(total)}</div>
+              <div className="l">
+                TOTAL
+              </div>
+
+              <div className="r">
+                {currency(total)}
+              </div>
             </div>
           </>
         ) : total ? (
@@ -350,56 +542,106 @@ export default function Ticket() {
             <div className="hr" />
 
             <div className="row b">
-              <div className="l">TOTAL</div>
-              <div className="r">{currency(total)}</div>
+              <div className="l">
+                TOTAL
+              </div>
+
+              <div className="r">
+                {currency(total)}
+              </div>
             </div>
           </>
         ) : null}
 
+        {/* DETALLE DE COMBOS */}
         {hasComboSelections ? (
           <>
             <div className="hr" />
 
-            <div className="b comboTitle">DETALLE DE COMBOS</div>
+            <div className="b comboTitle">
+              DETALLE DE COMBOS
+            </div>
 
-            {comboSelections.map((combo, i) => {
-              const rolls = Array.isArray(combo?.rolls)
-                ? combo.rolls.filter(Boolean)
-                : [];
-              const drinks = Array.isArray(combo?.drinks)
-                ? combo.drinks.filter(Boolean)
-                : [];
+            {comboSelections.map(
+              (combo, i) => {
+                const sandwiches =
+                  Array.isArray(
+                    combo?.sandwiches
+                  )
+                    ? combo.sandwiches.filter(
+                        Boolean
+                      )
+                    : [];
 
-              return (
-                <div key={`${combo?.comboId || "combo"}-${i}`} className="combo">
-                  <div className="comboName">
-                    {combo?.comboName || "Combo"}
-                    {comboSelections.length > 1 ? ` #${i + 1}` : ""}
+                const drinks =
+                  Array.isArray(combo?.drinks)
+                    ? combo.drinks.filter(
+                        Boolean
+                      )
+                    : [];
+
+                return (
+                  <div
+                    key={`${
+                      combo?.comboId ||
+                      "combo"
+                    }-${i}`}
+                    className="combo"
+                  >
+                    <div className="comboName">
+                      {combo?.comboName ||
+                        "Combo"}
+
+                      {comboSelections.length >
+                      1
+                        ? ` #${i + 1}`
+                        : ""}
+                    </div>
+
+                    {sandwiches.map(
+                      (sandwich, j) => (
+                        <div
+                          key={`sandwich-${j}`}
+                          className="comboDetail"
+                        >
+                          Sándwich{" "}
+                          {j + 1}:{" "}
+                          {sandwich}
+                        </div>
+                      )
+                    )}
+
+                    {drinks.map(
+                      (drink, j) => (
+                        <div
+                          key={`drink-${j}`}
+                          className="comboDetail"
+                        >
+                          Bebida
+                          {drinks.length > 1
+                            ? ` ${j + 1}`
+                            : ""}
+                          : {drink}
+                        </div>
+                      )
+                    )}
                   </div>
-
-                  {rolls.length > 0 ? (
-                    <div className="comboDetail">
-                      Rolls: {rolls.join(" / ")}
-                    </div>
-                  ) : null}
-
-                  {drinks.length > 0 ? (
-                    <div className="comboDetail">
-                      Bebidas: {drinks.join(" / ")}
-                    </div>
-                  ) : null}
-                </div>
-              );
-            })}
+                );
+              }
+            )}
           </>
         ) : null}
 
         <div className="hr" />
 
         <div className="m">
-          Estado: {paid ? "PAGADO" : "A PAGAR"}
+          Estado:{" "}
+          {paid
+            ? "PAGADO"
+            : "A PAGAR"}
         </div>
 
+        {/* ESTILOS */}
         <style>{`
           @page {
             size: 80mm auto;
