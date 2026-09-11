@@ -6,7 +6,7 @@ import React, { useMemo, useReducer, useRef, useState } from "react";
 
 const ORDERS_ENDPOINT = "/api/alto";
 
-const PHONE_URUGUAY = "099079595";
+const PHONE_URUGUAY = "099666040";
 
 // Por ahora dejamos la web abierta para poder probarla.
 // Después ponemos los horarios reales de Alto.
@@ -862,12 +862,16 @@ export default function AltoTallerPedidos() {
       {/* HEADER */}
       <header className="sticky top-0 z-40 border-b border-neutral-800 bg-black/95 backdrop-blur">
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-semibold tracking-tight">
-              ALTO TALLER
-            </h1>
+          <div className="flex items-center gap-3">
+            <div className="w-16 h-16 rounded-full overflow-hidden shrink-0 bg-black">
+              <img
+                src="/alto-logo.jpg"
+                alt="Alto Taller"
+                className="w-full h-full object-cover"
+              />
+            </div>
 
-            <p className="text-xs text-neutral-500 mt-1">
+            <p className="text-xs text-neutral-400">
               Café · Panadería · Sándwiches
             </p>
           </div>
