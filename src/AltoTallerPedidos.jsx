@@ -4,10 +4,8 @@ import React, { useMemo, useReducer, useState } from "react";
 // ALTO TALLER — PEDIDOS
 // ======================================================
 
-// Lo conectaremos después al backend propio de Alto
 const ORDERS_ENDPOINT = "/api/alto";
 
-// WhatsApp de Alto: lo completamos después
 const PHONE_URUGUAY = "099079595";
 
 // Por ahora dejamos la web abierta para poder probarla.
@@ -557,6 +555,7 @@ function reducer(state, action) {
 
   if (action.type === "add") {
     const id = action.item.id;
+
     next[id] = {
       item: action.item,
       qty: (state[id]?.qty || 0) + 1,
@@ -658,7 +657,9 @@ export default function AltoTallerPedidos() {
 
   // Delivery todavía sin tarifa hasta que definamos zonas de Alto.
   const deliveryFee = 0;
-  const total = subtotal + (method === "delivery" ? deliveryFee : 0);
+
+  const total =
+    subtotal + (method === "delivery" ? deliveryFee : 0);
 
   const comboInstances = useMemo(() => {
     const result = [];
@@ -722,24 +723,22 @@ export default function AltoTallerPedidos() {
     combosComplete &&
     (method === "pickup" || address.trim());
 
-  const orderComboSelections = comboInstances.map(
-    ({ item, key }) => {
-      const selection = comboSelections[key] || {};
+  const orderComboSelections = comboInstances.map(({ item, key }) => {
+    const selection = comboSelections[key] || {};
 
-      return {
-        comboId: item.id,
-        comboName: item.name,
+    return {
+      comboId: item.id,
+      comboName: item.name,
 
-        drinks: (selection.drinks || []).map(
-          (id) => ALL_ITEMS.find((x) => x.id === id)?.name || id
-        ),
+      drinks: (selection.drinks || []).map(
+        (id) => ALL_ITEMS.find((x) => x.id === id)?.name || id
+      ),
 
-        sandwiches: (selection.sandwiches || []).map(
-          (id) => ALL_ITEMS.find((x) => x.id === id)?.name || id
-        ),
-      };
-    }
-  );
+      sandwiches: (selection.sandwiches || []).map(
+        (id) => ALL_ITEMS.find((x) => x.id === id)?.name || id
+      ),
+    };
+  });
 
   async function sendOrder() {
     if (!canSend || sending) {
@@ -783,21 +782,28 @@ export default function AltoTallerPedidos() {
 
       if (!response.ok || data?.ok === false) {
         throw new Error(
-          data?.error || "Todavía no está conectado el backend de Alto."
+          data?.error || "No se pudo registrar el pedido."
         );
       }
 
       if (PHONE_URUGUAY) {
         const text = encodeURIComponent(buildWhatsAppText(order));
-        const digits = PHONE_URUGUAY.replace(/\D/g, "");
+
+        // 099079595 -> 99079595
+        // wa.me recibe 598 + número sin el 0 inicial.
+        const digits = PHONE_URUGUAY
+          .replace(/\D/g, "")
+          .replace(/^0/, "");
 
         window.location.href = `https://wa.me/598${digits}?text=${text}`;
       } else {
         alert("Pedido registrado correctamente.");
       }
     } catch (error) {
+      console.error(error);
+
       alert(
-        "La carta ya funciona, pero todavía falta conectar /api/alto y el sistema de impresión."
+        "No se pudo registrar el pedido. Probá nuevamente."
       );
     } finally {
       setSending(false);
@@ -837,7 +843,7 @@ export default function AltoTallerPedidos() {
       </section>
 
       <main className="max-w-6xl mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* MENU */}
+        {/* MENÚ */}
         <section className="lg:col-span-2 space-y-10">
           {CATALOG.map((category) => (
             <section key={category.id}>
@@ -959,8 +965,7 @@ export default function AltoTallerPedidos() {
 
                 {comboInstances.map(
                   ({ item, config, key, index }) => {
-                    const selection =
-                      comboSelections[key] || {};
+                    const selection = comboSelections[key] || {};
 
                     return (
                       <div
@@ -979,9 +984,7 @@ export default function AltoTallerPedidos() {
                         }).map((_, i) => (
                           <select
                             key={`sandwich-${i}`}
-                            value={
-                              selection.sandwiches?.[i] || ""
-                            }
+                            value={selection.sandwiches?.[i] || ""}
                             onChange={(e) =>
                               changeCombo(
                                 key,
@@ -1135,6 +1138,7 @@ export default function AltoTallerPedidos() {
                 <span className="text-neutral-500">
                   Subtotal
                 </span>
+
                 <span>{currency(subtotal)}</span>
               </div>
 
@@ -1154,9 +1158,7 @@ export default function AltoTallerPedidos() {
                   : "bg-neutral-100 text-neutral-400"
               }`}
             >
-              {sending
-                ? "Registrando..."
-                : "Enviar pedido"}
+              {sending ? "Registrando..." : "Enviar pedido"}
             </button>
 
             <button
