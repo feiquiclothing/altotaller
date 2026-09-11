@@ -8,7 +8,7 @@ import React, { useMemo, useReducer, useState } from "react";
 const ORDERS_ENDPOINT = "/api/alto";
 
 // WhatsApp de Alto: lo completamos después
-const PHONE_URUGUAY = "";
+const PHONE_URUGUAY = "099079595";
 
 // Por ahora dejamos la web abierta para poder probarla.
 // Después ponemos los horarios reales de Alto.
