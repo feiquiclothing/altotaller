@@ -1,0 +1,9 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Opcional: modo claro global */
+:root {
+  color: rgb(38 38 38);         /* ~ neutral-800 */
+  background: #fff;
+}
