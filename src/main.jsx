@@ -1,9 +1,7 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
 
-import SectoCafePedidos from "./SectoCafePedidos.jsx";
-import TumbaPizzas from "./tumbapizzas.jsx";
-
+import AltoTallerPedidos from "./AltoTallerPedidos.jsx";
 import Kitchen from "./Kitchen.jsx";
 import Admin from "./Admin.jsx";
 import Ticket from "./ticket.jsx";
@@ -16,9 +14,8 @@ function AppRouter() {
   if (path === "/kitchen") return <Kitchen />;
   if (path === "/ticket") return <Ticket />;
   if (path === "/admin") return <Admin />;
-  if (path === "/tumbapizzas") return <TumbaPizzas />;
 
-  return <SectoCafePedidos />;
+  return <AltoTallerPedidos />;
 }
 
 createRoot(document.getElementById("root")).render(
