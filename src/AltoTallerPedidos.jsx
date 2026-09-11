@@ -1,4 +1,4 @@
-import React, { useMemo, useReducer, useState } from "react";
+import React, { useMemo, useReducer, useRef, useState } from "react";
 
 // ======================================================
 // ALTO TALLER — PEDIDOS
@@ -25,6 +25,17 @@ const currency = (value) =>
     currency: "UYU",
     maximumFractionDigits: 0,
   }).format(value);
+
+// ======================================================
+// ZONAS DE ENVÍO
+// ======================================================
+
+const ZONES = [
+  { id: "cv", name: "Ciudad Vieja", fee: 0 },
+  { id: "centro", name: "Centro / Cordón / Aguada", fee: 170 },
+  { id: "pocitos", name: "Parque Rodó / Punta Carretas / Pocitos", fee: 220 },
+  { id: "otras", name: "Otras zonas — coordinar", fee: 270 },
+];
 
 // ======================================================
 // MENÚ
@@ -501,6 +512,30 @@ const CATALOG = MENU.map((category) => ({
 
 const ALL_ITEMS = CATALOG.flatMap((category) => category.items);
 
+const categoryById = (id) => CATALOG.find((category) => category.id === id);
+
+const pickItems = (categoryId, ids) => {
+  const category = categoryById(categoryId);
+  return (category?.items || []).filter((item) => ids.includes(item.id));
+};
+
+const SANDWICH_TAB = [
+  { id: "sandwich-combos", name: "COMBOS", items: pickItems("combos", ["combo-pollo-bebida", "combo-2-sandwich"]) },
+  categoryById("sandwiches"),
+  { id: "otros-sandwiches", name: "OTROS SÁNDWICHES", items: pickItems("salado", ["sandwich-prensado", "sandwich-olimpico", "sandwich-pollo"]) },
+  categoryById("acompanamientos"),
+  categoryById("panes"),
+  categoryById("bebidas"),
+].filter(Boolean);
+
+const CAFE_TAB = [
+  { id: "cafe-combos", name: "COMBOS DE CAFÉ", items: pickItems("combos", ["combo-cafe-budin", "combo-perfecto", "combo-cafe-croissant"]) },
+  categoryById("cafeteria"),
+  { id: "cafe-salado", name: "SALADO", items: pickItems("salado", ["croissant", "croissant-jyq", "toston-huevos", "toston-avocado", "toston-americano", "dos-croissant"]) },
+  categoryById("dulces"),
+  categoryById("bebidas"),
+].filter(Boolean);
+
 const DRINK_OPTIONS = ALL_ITEMS.filter((item) =>
   [
     "espresso",
@@ -616,10 +651,12 @@ function buildWhatsAppText(order) {
     ...comboLines,
     "",
     `Subtotal: ${currency(order.subtotal)}`,
+    order.method === "delivery" ? `Envío: ${currency(order.fee)}` : null,
     `Total: ${currency(order.total)}`,
     "",
     `Nombre: ${order.name}`,
     `Teléfono: ${order.phone}`,
+    order.method === "delivery" ? `Zona: ${order.zoneName}` : null,
     order.method === "delivery"
       ? `Dirección: ${order.address}`
       : "Retiro en el local",
@@ -635,7 +672,9 @@ function buildWhatsAppText(order) {
 
 export default function AltoTallerPedidos() {
   const [cart, dispatch] = useReducer(reducer, {});
+  const [activeTab, setActiveTab] = useState("sandwiches");
   const [method, setMethod] = useState("pickup");
+  const [zone, setZone] = useState(ZONES[0].id);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
@@ -643,6 +682,9 @@ export default function AltoTallerPedidos() {
 
   const [comboSelections, setComboSelections] = useState({});
   const [sending, setSending] = useState(false);
+  const cartRef = useRef(null);
+  const [cartPeek, setCartPeek] = useState(false);
+  const showCartPeek = () => setCartPeek(true);
 
   const items = useMemo(() => Object.values(cart), [cart]);
 
@@ -655,11 +697,14 @@ export default function AltoTallerPedidos() {
     [items]
   );
 
-  // Delivery todavía sin tarifa hasta que definamos zonas de Alto.
-  const deliveryFee = 0;
+  const deliveryFee =
+    method === "delivery"
+      ? ZONES.find((item) => item.id === zone)?.fee || 0
+      : 0;
 
-  const total =
-    subtotal + (method === "delivery" ? deliveryFee : 0);
+  const total = subtotal + deliveryFee;
+
+  const visibleCategories = activeTab === "sandwiches" ? SANDWICH_TAB : CAFE_TAB;
 
   const comboInstances = useMemo(() => {
     const result = [];
@@ -752,8 +797,10 @@ export default function AltoTallerPedidos() {
       items,
       subtotal,
       total,
-      fee: method === "delivery" ? deliveryFee : 0,
+      fee: deliveryFee,
       method,
+      zone,
+      zoneName: ZONES.find((item) => item.id === zone)?.name || "",
       name,
       phone,
       address,
@@ -811,9 +858,9 @@ export default function AltoTallerPedidos() {
   }
 
   return (
-    <div className="min-h-screen bg-white text-neutral-900">
+    <div className="min-h-screen bg-black text-white">
       {/* HEADER */}
-      <header className="sticky top-0 z-40 border-b border-neutral-200 bg-white/95 backdrop-blur">
+      <header className="sticky top-0 z-40 border-b border-neutral-800 bg-black/95 backdrop-blur">
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
           <div>
             <h1 className="text-xl font-semibold tracking-tight">
@@ -825,7 +872,7 @@ export default function AltoTallerPedidos() {
             </p>
           </div>
 
-          <div className="text-xs font-medium rounded-full bg-black text-white px-3 py-2">
+          <div className="text-xs font-medium rounded-full bg-white text-black px-3 py-2">
             15% OFF WEB
           </div>
         </div>
@@ -837,29 +884,36 @@ export default function AltoTallerPedidos() {
           Pedí directo a Alto
         </h2>
 
-        <p className="text-neutral-500 mt-2">
+        <p className="text-neutral-400 mt-2">
           Toda la carta con 15% de descuento.
         </p>
+      </section>
+
+      <section className="max-w-6xl mx-auto px-4 pt-5">
+        <div className="grid grid-cols-2 gap-2 rounded-2xl border border-neutral-800 bg-neutral-950 p-1">
+          <button type="button" onClick={() => setActiveTab("sandwiches")} className={`rounded-xl py-3 text-sm font-medium transition ${activeTab === "sandwiches" ? "bg-white text-black" : "text-neutral-400"}`}>SÁNDWICHES</button>
+          <button type="button" onClick={() => setActiveTab("cafe")} className={`rounded-xl py-3 text-sm font-medium transition ${activeTab === "cafe" ? "bg-white text-black" : "text-neutral-400"}`}>CAFÉ</button>
+        </div>
       </section>
 
       <main className="max-w-6xl mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* MENÚ */}
         <section className="lg:col-span-2 space-y-10">
-          {CATALOG.map((category) => (
+          {visibleCategories.map((category) => (
             <section key={category.id}>
               <div className="flex items-center gap-4 mb-4">
-                <h2 className="text-xs tracking-[0.2em] text-neutral-500 whitespace-nowrap">
+                <h2 className="text-xs tracking-[0.2em] text-neutral-400 whitespace-nowrap">
                   {category.name}
                 </h2>
 
-                <div className="h-px bg-neutral-200 flex-1" />
+                <div className="h-px bg-neutral-800 flex-1" />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {category.items.map((item) => (
                   <article
                     key={item.id}
-                    className="border border-neutral-200 rounded-2xl p-4 bg-white flex flex-col justify-between"
+                    className="border border-neutral-800 rounded-2xl p-4 bg-neutral-950 flex flex-col justify-between"
                   >
                     <div>
                       <h3 className="font-medium leading-tight">
@@ -867,7 +921,7 @@ export default function AltoTallerPedidos() {
                       </h3>
 
                       {item.description && (
-                        <p className="text-sm text-neutral-500 mt-2 leading-relaxed">
+                        <p className="text-sm text-neutral-400 mt-2 leading-relaxed">
                           {item.description}
                         </p>
                       )}
@@ -893,7 +947,7 @@ export default function AltoTallerPedidos() {
                               item,
                             })
                           }
-                          className="w-9 h-9 border border-neutral-200 rounded-xl"
+                          className="w-9 h-9 border border-neutral-700 rounded-xl text-neutral-300"
                         >
                           −
                         </button>
@@ -904,13 +958,11 @@ export default function AltoTallerPedidos() {
 
                         <button
                           type="button"
-                          onClick={() =>
-                            dispatch({
-                              type: "add",
-                              item,
-                            })
-                          }
-                          className="w-9 h-9 bg-black text-white rounded-xl"
+                          onClick={() => {
+                            dispatch({ type: "add", item });
+                            showCartPeek();
+                          }}
+                          className="w-9 h-9 bg-white text-black rounded-xl"
                         >
                           +
                         </button>
@@ -925,7 +977,7 @@ export default function AltoTallerPedidos() {
 
         {/* CARRITO */}
         <aside>
-          <div className="lg:sticky lg:top-24 border border-neutral-200 rounded-2xl p-4">
+          <div ref={cartRef} className="lg:sticky lg:top-24 border border-neutral-800 bg-neutral-950 rounded-2xl p-4">
             <h2 className="text-xs tracking-[0.2em] text-neutral-500 mb-4">
               TU PEDIDO
             </h2>
@@ -956,7 +1008,7 @@ export default function AltoTallerPedidos() {
 
             {/* OPCIONES DE COMBOS */}
             {comboInstances.length > 0 && (
-              <div className="border-t border-neutral-200 mt-5 pt-5 space-y-4">
+              <div className="border-t border-neutral-800 mt-5 pt-5 space-y-4">
                 <div>
                   <h3 className="text-xs tracking-[0.16em] text-neutral-500">
                     COMPLETÁ TUS COMBOS
@@ -993,7 +1045,7 @@ export default function AltoTallerPedidos() {
                                 e.target.value
                               )
                             }
-                            className="w-full border border-neutral-200 rounded-xl p-2 bg-white text-sm"
+                            className="w-full border border-neutral-700 rounded-xl p-2 bg-neutral-900 text-white text-sm"
                           >
                             <option value="">
                               Elegí sándwich {i + 1}
@@ -1024,7 +1076,7 @@ export default function AltoTallerPedidos() {
                                 e.target.value
                               )
                             }
-                            className="w-full border border-neutral-200 rounded-xl p-2 bg-white text-sm"
+                            className="w-full border border-neutral-700 rounded-xl p-2 bg-neutral-900 text-white text-sm"
                           >
                             <option value="">
                               Elegí bebida {i + 1}
@@ -1047,7 +1099,7 @@ export default function AltoTallerPedidos() {
               </div>
             )}
 
-            <hr className="my-5 border-neutral-200" />
+            <hr className="my-5 border-neutral-800" />
 
             {/* RETIRO / DELIVERY */}
             <div className="grid grid-cols-2 gap-2">
@@ -1056,8 +1108,8 @@ export default function AltoTallerPedidos() {
                 onClick={() => setMethod("pickup")}
                 className={`rounded-xl p-2 border text-sm ${
                   method === "pickup"
-                    ? "bg-black text-white border-black"
-                    : "border-neutral-200"
+                    ? "bg-white text-black border-white"
+                    : "border-neutral-700 text-neutral-300"
                 }`}
               >
                 Retiro
@@ -1068,8 +1120,8 @@ export default function AltoTallerPedidos() {
                 onClick={() => setMethod("delivery")}
                 className={`rounded-xl p-2 border text-sm ${
                   method === "delivery"
-                    ? "bg-black text-white border-black"
-                    : "border-neutral-200"
+                    ? "bg-white text-black border-white"
+                    : "border-neutral-700 text-neutral-300"
                 }`}
               >
                 Delivery
@@ -1077,17 +1129,21 @@ export default function AltoTallerPedidos() {
             </div>
 
             {method === "delivery" && (
-              <div className="mt-3">
-                <label className="text-xs text-neutral-500">
-                  Dirección
-                </label>
-
-                <input
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                  placeholder="Calle, número, apto"
-                  className="mt-1 w-full border border-neutral-200 rounded-xl p-2"
-                />
+              <div className="mt-3 space-y-3">
+                <div>
+                  <label className="text-xs text-neutral-400">Zona de envío</label>
+                  <select value={zone} onChange={(e) => setZone(e.target.value)} className="mt-1 w-full border border-neutral-700 bg-neutral-900 text-white rounded-xl p-2">
+                    {ZONES.map((item) => (
+                      <option key={item.id} value={item.id}>
+                        {item.name} · {item.fee === 0 ? "Envío gratis" : currency(item.fee)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs text-neutral-400">Dirección</label>
+                  <input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Calle, número, apto" className="mt-1 w-full border border-neutral-700 bg-neutral-900 text-white rounded-xl p-2 placeholder-neutral-500" />
+                </div>
               </div>
             )}
 
@@ -1101,7 +1157,7 @@ export default function AltoTallerPedidos() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Tu nombre"
-                  className="mt-1 w-full border border-neutral-200 rounded-xl p-2"
+                  className="mt-1 w-full border border-neutral-700 bg-neutral-900 text-white rounded-xl p-2 placeholder-neutral-500"
                 />
               </div>
 
@@ -1114,7 +1170,7 @@ export default function AltoTallerPedidos() {
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="09..."
-                  className="mt-1 w-full border border-neutral-200 rounded-xl p-2"
+                  className="mt-1 w-full border border-neutral-700 bg-neutral-900 text-white rounded-xl p-2 placeholder-neutral-500"
                 />
               </div>
             </div>
@@ -1129,23 +1185,16 @@ export default function AltoTallerPedidos() {
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Aclaraciones del pedido..."
                 rows={2}
-                className="mt-1 w-full border border-neutral-200 rounded-xl p-2"
+                className="mt-1 w-full border border-neutral-700 bg-neutral-900 text-white rounded-xl p-2 placeholder-neutral-500"
               />
             </div>
 
-            <div className="border-t border-neutral-200 mt-5 pt-4 space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-neutral-500">
-                  Subtotal
-                </span>
-
-                <span>{currency(subtotal)}</span>
-              </div>
-
-              <div className="flex justify-between font-semibold text-base">
-                <span>Total</span>
-                <span>{currency(total)}</span>
-              </div>
+            <div className="border-t border-neutral-800 mt-5 pt-4 space-y-2 text-sm">
+              <div className="flex justify-between"><span className="text-neutral-400">Subtotal</span><span>{currency(subtotal)}</span></div>
+              {method === "delivery" && (
+                <div className="flex justify-between"><span className="text-neutral-400">Envío</span><span>{deliveryFee === 0 ? "Gratis" : currency(deliveryFee)}</span></div>
+              )}
+              <div className="flex justify-between font-semibold text-base"><span>Total</span><span>{currency(total)}</span></div>
             </div>
 
             <button
@@ -1154,8 +1203,8 @@ export default function AltoTallerPedidos() {
               onClick={sendOrder}
               className={`w-full rounded-2xl py-3 mt-5 ${
                 canSend && !sending
-                  ? "bg-black text-white"
-                  : "bg-neutral-100 text-neutral-400"
+                  ? "bg-white text-black"
+                  : "bg-neutral-800 text-neutral-500"
               }`}
             >
               {sending ? "Registrando..." : "Enviar pedido"}
@@ -1167,7 +1216,7 @@ export default function AltoTallerPedidos() {
                 dispatch({ type: "clear" });
                 setComboSelections({});
               }}
-              className="w-full rounded-2xl py-2 mt-2 border border-neutral-200 text-sm"
+              className="w-full rounded-2xl py-2 mt-2 border border-neutral-700 text-sm text-neutral-300"
             >
               Vaciar carrito
             </button>
@@ -1175,8 +1224,36 @@ export default function AltoTallerPedidos() {
         </aside>
       </main>
 
+      {/* MINI CARRITO FLOTANTE — MISMO COMPORTAMIENTO QUE SECTO */}
+      {items.length > 0 && (
+        <div className={"fixed right-3 top-24 z-50 w-[340px] max-w-[90vw] rounded-2xl border border-neutral-200 bg-white text-neutral-900 shadow-2xl p-4 transition-transform duration-300 " + (cartPeek ? "translate-x-0" : "translate-x-[120%]")} style={{ WebkitTapHighlightColor: "transparent" }}>
+          <div className="flex items-start justify-between gap-3">
+            <div><div className="text-sm tracking-[0.2em] text-neutral-500">TU PEDIDO</div><div className="text-xs text-neutral-400 mt-1">Elegí si querés seguir agregando o completar los datos</div></div>
+            <button type="button" onClick={() => setCartPeek(false)} className="text-sm border border-neutral-200 rounded-xl px-2 py-1 text-neutral-500">✕</button>
+          </div>
+          <div className="mt-3 max-h-[34vh] overflow-auto pr-1"><div className="space-y-2">
+            {items.map(({ item, qty }) => (
+              <div key={item.id} className="flex justify-between gap-3 text-sm"><div className="text-neutral-800 leading-tight"><div className="font-medium">{item.name}</div><div className="text-neutral-500">x{qty}</div></div><div className="text-neutral-700 whitespace-nowrap">{currency(item.price * qty)}</div></div>
+            ))}
+          </div></div>
+          <div className="mt-3 pt-3 border-t border-neutral-200 text-sm space-y-3">
+            <div className="flex justify-between"><span className="text-neutral-500">Total</span><span className="text-neutral-900 font-medium">{currency(total)}</span></div>
+            <div className="grid grid-cols-1 gap-2">
+              <button type="button" onClick={() => setCartPeek(false)} className="w-full rounded-2xl py-2 border border-neutral-200 text-sm">Seguir comprando</button>
+              <button type="button" onClick={() => { setCartPeek(false); if (cartRef.current) cartRef.current.scrollIntoView({ behavior: "smooth", block: "start" }); }} className="w-full rounded-2xl py-3 text-center bg-black text-white">Completar pedido</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {items.length > 0 && !cartPeek && (
+        <button type="button" onClick={() => setCartPeek(true)} className="fixed right-3 top-24 z-40 rounded-2xl bg-white text-black px-4 py-3 shadow-2xl text-sm border border-neutral-200">
+          Tu pedido · {currency(total)}
+        </button>
+      )}
+
       <footer className="max-w-6xl mx-auto px-4 pb-10">
-        <hr className="border-neutral-200 mb-4" />
+        <hr className="border-neutral-800 mb-4" />
 
         <div className="text-xs text-neutral-500">
           © {new Date().getFullYear()} Alto Taller
