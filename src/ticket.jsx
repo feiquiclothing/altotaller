@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 
-const ENDPOINT = "/api/secto";
+const ENDPOINT = "/api/alto";
 
 const currency = (uy) =>
   new Intl.NumberFormat("es-UY", {
@@ -288,8 +288,8 @@ export default function Ticket() {
 
       <div className="t">
         <div className="c">
-          <div className="b">SECTO CAFE</div>
-          <div className="m">Piedras 276</div>
+          <div className="b">ALTO TALLER</div>
+          <div className="m">Piedras 292</div>
         </div>
 
         <div className="hr" />
