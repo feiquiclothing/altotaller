@@ -6,7 +6,7 @@ import React, { useMemo, useReducer, useRef, useState } from "react";
 
 const ORDERS_ENDPOINT = "/api/alto";
 
-const PHONE_URUGUAY = "099666040";
+const PHONE_URUGUAY = "099079595";
 
 // Por ahora dejamos la web abierta para poder probarla.
 // Después ponemos los horarios reales de Alto.
@@ -40,6 +40,35 @@ const ZONES = [
 // ======================================================
 // MENÚ
 // ======================================================
+
+const PRODUCT_IMAGES = {
+  "stagliata-bola": "/products/stagliata-bola.webp",
+  "chivito": "/products/chivito.webp",
+  "cochinita": "/products/cochinita-pibil.webp",
+  "barros-luco": "/products/barros-luco.webp",
+  "especial-gales": "/products/especial-gales.webp",
+  "campo-suizo": "/products/campo-suizo.webp",
+  "olimpico-argentino": "/products/olimpico-argentino.webp",
+  "veggie-frances": "/products/veggie-frances.webp",
+
+  "espresso": "/products/espresso.webp",
+  "americano": "/products/americano.webp",
+  "cortado": "/products/cortado.webp",
+  "capuccino": "/products/capuccino.webp",
+  "chocochino": "/products/chocochino.webp",
+  "te-frappe": "/products/te-frappe.webp",
+
+  "croissant": "/products/croissant.webp",
+  "croissant-jyq": "/products/croissant-jyq.webp",
+  "toston-huevos": "/products/toston-huevos.webp",
+  "toston-avocado": "/products/toston-avocado.webp",
+  "toston-americano": "/products/toston-americano.webp",
+
+  "budin": "/products/budin.webp",
+  "roll-canela": "/products/roll-canela.webp",
+  "cheesecake": "/products/cheesecake.webp",
+  "brownie": "/products/brownie.webp",
+};
 
 const MENU = [
   {
@@ -917,21 +946,34 @@ export default function AltoTallerPedidos() {
                 {category.items.map((item) => (
                   <article
                     key={item.id}
-                    className="border border-neutral-800 rounded-2xl p-4 bg-neutral-950 flex flex-col justify-between"
+                    className="border border-neutral-800 rounded-2xl overflow-hidden bg-neutral-950 flex flex-col justify-between"
                   >
                     <div>
-                      <h3 className="font-medium leading-tight">
-                        {item.name}
-                      </h3>
-
-                      {item.description && (
-                        <p className="text-sm text-neutral-400 mt-2 leading-relaxed">
-                          {item.description}
-                        </p>
+                      {PRODUCT_IMAGES[item.id] && (
+                        <div className="aspect-[4/3] overflow-hidden bg-neutral-900">
+                          <img
+                            src={PRODUCT_IMAGES[item.id]}
+                            alt={item.name}
+                            loading="lazy"
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
                       )}
+
+                      <div className="p-4 pb-0">
+                        <h3 className="font-medium leading-tight">
+                          {item.name}
+                        </h3>
+
+                        {item.description && (
+                          <p className="text-sm text-neutral-400 mt-2 leading-relaxed">
+                            {item.description}
+                          </p>
+                        )}
+                      </div>
                     </div>
 
-                    <div className="flex items-end justify-between mt-5 gap-4">
+                    <div className="flex items-end justify-between mt-5 gap-4 px-4 pb-4">
                       <div>
                         <div className="text-xs text-neutral-400 line-through">
                           {currency(item.basePrice)}
