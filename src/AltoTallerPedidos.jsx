@@ -42,7 +42,12 @@ const ZONES = [
 // ======================================================
 
 const PRODUCT_IMAGES = {
+  "bauru": "/products/Bauru.png",
   "stagliata-bola": "/products/stagliata-bola.webp",
+  "stagliata-french-beef": "/products/Roast beef.png",
+  "stagliata-pollo": "/products/Pollo peruano.png",
+  "veggie-grecia": "/products/Veggi grecia.png",
+
   "chivito": "/products/chivito.webp",
   "cochinita": "/products/cochinita-pibil.webp",
   "barros-luco": "/products/barros-luco.webp",
