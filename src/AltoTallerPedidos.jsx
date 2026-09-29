@@ -42,6 +42,13 @@ const ZONES = [
 // ======================================================
 
 const PRODUCT_IMAGES = {
+  "combo-cafe-budin": "/products/combo-cafe-budin.webp",
+  "carrot-cake": "/products/carrot-cake.webp",
+  "combo-perfecto": "/products/combo-perfecto.webp",
+  "combo-cafe-croissant": "/products/combo-cafe-croissant.webp",
+  "te": "/products/te.webp",
+  "te-leche": "/products/te-leche.webp",
+  "dos-croissant": "/products/dos-croissant.webp",
   "tiramisu": "/products/tiramisu.webp",
   "coca-light": "/products/coca-light.webp",
   "sprite": "/products/sprite.webp",
@@ -595,7 +602,7 @@ const pickItems = (categoryId, ids) => {
 const SANDWICH_TAB = [
   { id: "sandwich-combos", name: "COMBOS", items: pickItems("combos", ["combo-pollo-bebida", "combo-2-sandwich"]) },
   categoryById("sandwiches"),
-  
+  { id: "otros-sandwiches", name: "OTROS SÁNDWICHES", items: pickItems("salado", ["sandwich-prensado", "sandwich-olimpico", "sandwich-pollo"]) },
   categoryById("acompanamientos"),
   categoryById("panes"),
   categoryById("bebidas"),
