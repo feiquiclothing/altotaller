@@ -98,6 +98,7 @@ const PRODUCT_IMAGES = {
   "schweppes": "/products/schweppes.webp",
   "schweppes-zero": "/products/schweppes-zero.webp",
   "agua-sin-gas": "/products/agua-sin-gas.webp",
+  "agua-gas": "/products/agua-sin-gas.webp",
   "mahou": "/products/mahou.webp",
   "mahou-zero": "/products/mahou-zero.webp",
   "combo-pollo-bebida": "/products/combo-pollo-bebida.webp",
