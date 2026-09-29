@@ -42,12 +42,10 @@ const ZONES = [
 // ======================================================
 
 const PRODUCT_IMAGES = {
-  "bauru": "/products/Bauru.png",
+  "tiramisu": "/products/tiramisu.webp",
+  "coca-light": "/products/coca-light.webp",
+  "sprite": "/products/sprite.webp",
   "stagliata-bola": "/products/stagliata-bola.webp",
-  "stagliata-french-beef": "/products/Roast beef.png",
-  "stagliata-pollo": "/products/Pollo peruano.png",
-  "veggie-grecia": "/products/Veggi grecia.png",
-
   "chivito": "/products/chivito.webp",
   "cochinita": "/products/cochinita-pibil.webp",
   "barros-luco": "/products/barros-luco.webp",
@@ -55,24 +53,47 @@ const PRODUCT_IMAGES = {
   "campo-suizo": "/products/campo-suizo.webp",
   "olimpico-argentino": "/products/olimpico-argentino.webp",
   "veggie-frances": "/products/veggie-frances.webp",
-
   "espresso": "/products/espresso.webp",
   "americano": "/products/americano.webp",
   "cortado": "/products/cortado.webp",
   "capuccino": "/products/capuccino.webp",
   "chocochino": "/products/chocochino.webp",
   "te-frappe": "/products/te-frappe.webp",
-
   "croissant": "/products/croissant.webp",
   "croissant-jyq": "/products/croissant-jyq.webp",
   "toston-huevos": "/products/toston-huevos.webp",
   "toston-avocado": "/products/toston-avocado.webp",
   "toston-americano": "/products/toston-americano.webp",
-
   "budin": "/products/budin.webp",
   "roll-canela": "/products/roll-canela.webp",
   "cheesecake": "/products/cheesecake.webp",
   "brownie": "/products/brownie.webp",
+  "bauru": "/products/Bauru.png",
+  "stagliata-french-beef": "/products/Roast beef.png",
+  "stagliata-pollo": "/products/Pollo peruano.png",
+  "veggie-grecia": "/products/Veggi grecia.png",
+  "combo-2-sandwich": "/products/combo-2-sandwich.webp",
+  "papas": "/products/papas.webp",
+  "boniatos": "/products/boniatos.webp",
+  "aros-cebolla": "/products/aros-cebolla.webp",
+  "coleslaw": "/products/coleslaw.webp",
+  "alto-campo": "/products/alto-campo.webp",
+  "focaccia": "/products/focaccia.webp",
+  "tortuga-brioche": "/products/tortuga-brioche.webp",
+  "alto-alfajor": "/products/alto-alfajor.webp",
+  "limonada": "/products/limonada.webp",
+  "limonada-hibiscus": "/products/limonada-hibiscus.webp",
+  "jugo-naranja": "/products/jugo-naranja.webp",
+  "kombucha": "/products/kombucha.webp",
+  "coca": "/products/coca.webp",
+  "coca-zero": "/products/coca-zero.webp",
+  "sprite-zero": "/products/sprite-zero.webp",
+  "schweppes": "/products/schweppes.webp",
+  "schweppes-zero": "/products/schweppes-zero.webp",
+  "agua-sin-gas": "/products/agua-sin-gas.webp",
+  "mahou": "/products/mahou.webp",
+  "mahou-zero": "/products/mahou-zero.webp",
+  "combo-pollo-bebida": "/products/combo-pollo-bebida.webp",
 };
 
 const MENU = [
@@ -414,6 +435,12 @@ const MENU = [
         basePrice: 190,
       },
       {
+        id: "tiramisu",
+        name: "Tiramisú",
+        description: "",
+        basePrice: 280,
+      },
+      {
         id: "alto-alfajor",
         name: "Alto alfajor",
         description:
@@ -481,6 +508,18 @@ const MENU = [
         id: "coca",
         name: "Coca-Cola 600 ml",
         description: "Coca-Cola Original.",
+        basePrice: 160,
+      },
+      {
+        id: "coca-light",
+        name: "Coca-Cola Light 600 ml",
+        description: "Coca-Cola Light.",
+        basePrice: 160,
+      },
+      {
+        id: "sprite",
+        name: "Sprite 600 ml",
+        description: "Sprite Original.",
         basePrice: 160,
       },
       {
@@ -585,6 +624,8 @@ const DRINK_OPTIONS = ALL_ITEMS.filter((item) =>
     "jugo-naranja",
     "coca-zero",
     "coca",
+    "coca-light",
+    "sprite",
     "sprite-zero",
     "schweppes",
     "schweppes-zero",
