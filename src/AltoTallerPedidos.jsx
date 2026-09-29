@@ -602,7 +602,7 @@ const pickItems = (categoryId, ids) => {
 const SANDWICH_TAB = [
   { id: "sandwich-combos", name: "COMBOS", items: pickItems("combos", ["combo-pollo-bebida", "combo-2-sandwich"]) },
   categoryById("sandwiches"),
-  { id: "otros-sandwiches", name: "OTROS SÁNDWICHES", items: pickItems("salado", ["sandwich-prensado", "sandwich-olimpico", "sandwich-pollo"]) },
+  
   categoryById("acompanamientos"),
   categoryById("panes"),
   categoryById("bebidas"),
